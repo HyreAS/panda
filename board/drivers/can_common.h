@@ -5,6 +5,15 @@ typedef struct {
   CANPacket_t *elems;
 } can_ring;
 
+typedef struct {
+  uint8_t bus_lookup;
+  uint8_t can_num_lookup;
+  uint32_t can_speed;
+  uint32_t can_data_speed;
+  bool canfd_enabled;
+  bool brs_enabled;
+} bus_config_t;
+
 #define CAN_BUS_NUM_MASK 0x3FU
 
 #define BUS_MAX 4U
@@ -20,8 +29,6 @@ extern int pending_can_live;
 // must reinit after changing these
 extern int can_loopback;
 extern int can_silent;
-extern uint32_t can_speed[4];
-extern uint32_t can_data_speed[3];
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
@@ -157,19 +164,18 @@ void can_clear(can_ring *q) {
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-uint8_t bus_lookup[] = {0,1,2};
-uint8_t can_num_lookup[] = {0,1,2,-1};
-uint32_t can_speed[] = {5000, 5000, 5000, 333};
-// For CAN FD only
-uint32_t can_data_speed[] = {5000, 5000, 5000};
-bool canfd_enabled[] = {false, false, false};
-bool brs_enabled[] = {false, false, false};
+bus_config_t bus_config[] = {
+  { .bus_lookup =0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup =1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup =2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 5000U, .canfd_enabled = false, .brs_enabled = false },
+  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .can_speed = 333U, .can_data_speed = 333U, .canfd_enabled = false, .brs_enabled = false },
+};
 
 #define CAN_MAX 3U
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
-#define BUS_NUM_FROM_CAN_NUM(num) (bus_lookup[num])
-#define CAN_NUM_FROM_BUS_NUM(num) (can_num_lookup[num])
+#define BUS_NUM_FROM_CAN_NUM(num) (bus_config[num].bus_lookup)
+#define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
 
 void can_init_all(void) {
   bool ret = true;
@@ -181,10 +187,10 @@ void can_init_all(void) {
 }
 
 void can_flip_buses(uint8_t bus1, uint8_t bus2){
-  bus_lookup[bus1] = bus2;
-  bus_lookup[bus2] = bus1;
-  can_num_lookup[bus1] = bus2;
-  can_num_lookup[bus2] = bus1;
+  bus_config[bus1].bus_lookup = bus2;
+  bus_config[bus2].bus_lookup = bus1;
+  bus_config[bus1].can_num_lookup = bus2;
+  bus_config[bus2].can_num_lookup = bus1;
 }
 
 void ignition_can_hook(CANPacket_t *to_push) {
@@ -234,7 +240,7 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < BUS_MAX) {
       // add CAN packet to send queue
-      if ((bus_number == 3U) && (can_num_lookup[3] == 0xFFU)) {
+      if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
         can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;

@@ -540,7 +540,7 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xde:
       if (setup->b.wValue.w < BUS_MAX) {
         // TODO: add sanity check, ideally check if value is correct(from array of correct values)
-        can_speed[setup->b.wValue.w] = setup->b.wIndex.w;
+        bus_config[setup->b.wValue.w].can_speed = setup->b.wIndex.w;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
         UNUSED(ret);
       }
@@ -697,9 +697,9 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     case 0xf9:
       if (setup->b.wValue.w < CAN_MAX) {
         // TODO: add sanity check, ideally check if value is correct(from array of correct values)
-        can_data_speed[setup->b.wValue.w] = setup->b.wIndex.w;
-        canfd_enabled[setup->b.wValue.w] = (setup->b.wIndex.w >= can_speed[setup->b.wValue.w]) ? true : false;
-        brs_enabled[setup->b.wValue.w] = (setup->b.wIndex.w > can_speed[setup->b.wValue.w]) ? true : false;
+        bus_config[setup->b.wValue.w].can_data_speed = setup->b.wIndex.w;
+        bus_config[setup->b.wValue.w].canfd_enabled = (setup->b.wIndex.w >= bus_config[setup->b.wValue.w].can_speed) ? true : false;
+        bus_config[setup->b.wValue.w].brs_enabled = (setup->b.wIndex.w > bus_config[setup->b.wValue.w].can_speed) ? true : false;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(setup->b.wValue.w));
         UNUSED(ret);
       }
@@ -707,8 +707,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
     // **** 0xfa: check if CAN FD and BRS are enabled
     case 0xfa:
         if (setup->b.wValue.w < CAN_MAX) {
-        resp[0] = canfd_enabled[setup->b.wValue.w];
-        resp[1] = brs_enabled[setup->b.wValue.w];
+        resp[0] =  bus_config[setup->b.wValue.w].canfd_enabled;
+        resp[1] = bus_config[setup->b.wValue.w].brs_enabled;
         resp_len = 2;
       }
       break;

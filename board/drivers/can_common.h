@@ -160,7 +160,11 @@ void can_clear(can_ring *q) {
 uint8_t bus_lookup[] = {0,1,2};
 uint8_t can_num_lookup[] = {0,1,2,-1};
 uint32_t can_speed[] = {5000, 5000, 5000, 333};
-uint32_t can_data_speed[] = {5000, 5000, 5000}; //For CAN FD with BRS only
+// For CAN FD only
+uint32_t can_data_speed[] = {5000, 5000, 5000};
+bool canfd_enabled[] = {false, false, false};
+bool brs_enabled[] = {false, false, false};
+
 #define CAN_MAX 3U
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])

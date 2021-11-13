@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+libusb1 = "==2.0.1"
+numpy = "==1.21.4"
+hexdump = ">=3.3"
+pycryptodome = "==3.9.8"
+tqdm = ">=4.14.0"
+nose = "*"
+parameterized = "*"
+requests = "*"
+flake8 = "==3.7.9"
+cffi = "==1.14.3"
+crcmod = "*"
+pre-commit = "==2.13.0"
+pylint = "==2.5.2"
+SCons = "==4.1.0.post1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
